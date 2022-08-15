@@ -4,6 +4,7 @@ package renderer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,25 +29,112 @@ const (
 )
 
 type Values struct {
-	Global    Global    `yaml:"global" structs:"global"`
-	HubConfig HubConfig `yaml:"hubconfig" structs:"hubconfig"`
-	Org       string    `yaml:"org" structs:"org"`
+	Global    Global    `json:"global" structs:"global"`
+	HubConfig HubConfig `json:"hubconfig" structs:"hubconfig"`
+	Org       string    `json:"org" structs:"org"`
 }
 
 type Global struct {
-	ImageOverrides map[string]string `yaml:"imageOverrides" structs:"imageOverrides"`
-	PullPolicy     string            `yaml:"pullPolicy" structs:"pullPolicy"`
-	PullSecret     string            `yaml:"pullSecret" structs:"pullSecret"`
-	Namespace      string            `yaml:"namespace" structs:"namespace"`
+	ImageOverrides map[string]string `json:"imageOverrides" structs:"imageOverrides"`
+	PullPolicy     string            `json:"pullPolicy" structs:"pullPolicy"`
+	PullSecret     string            `json:"pullSecret" structs:"pullSecret"`
+	Namespace      string            `json:"namespace" structs:"namespace"`
 }
 
 type HubConfig struct {
-	NodeSelector         map[string]string   `yaml:"nodeSelector" structs:"nodeSelector"`
-	ProxyConfigs         map[string]string   `yaml:"proxyConfigs" structs:"proxyConfigs"`
-	ReplicaCount         int                 `yaml:"replicaCount" structs:"replicaCount"`
-	Tolerations          []corev1.Toleration `yaml:"tolerations" structs:"tolerations"`
-	OCPVersion           string              `yaml:"ocpVersion" structs:"ocpVersion"`
-	ClusterIngressDomain string              `yaml:"clusterIngressDomain" structs:"clusterIngressDomain"`
+	NodeSelector         map[string]string `json:"nodeSelector" structs:"nodeSelector"`
+	ProxyConfigs         map[string]string `json:"proxyConfigs" structs:"proxyConfigs"`
+	ReplicaCount         int               `json:"replicaCount" structs:"replicaCount"`
+	Tolerations          []Toleration      `json:"tolerations" structs:"tolerations"`
+	OCPVersion           string            `json:"ocpVersion" structs:"ocpVersion"`
+	ClusterIngressDomain string            `json:"clusterIngressDomain" structs:"clusterIngressDomain"`
+}
+
+type Toleration struct {
+	Key               string                    `json:"Key" protobuf:"bytes,1,opt,name=key"`
+	Operator          corev1.TolerationOperator `json:"Operator" protobuf:"bytes,2,opt,name=operator,casttype=TolerationOperator"`
+	Value             string                    `json:"Value" protobuf:"bytes,3,opt,name=value"`
+	Effect            corev1.TaintEffect        `json:"Effect" protobuf:"bytes,4,opt,name=effect,casttype=TaintEffect"`
+	TolerationSeconds *int64                    `json:"TolerationSeconds" protobuf:"varint,5,opt,name=tolerationSeconds"`
+}
+
+func convertTolerations(tols []corev1.Toleration) []Toleration {
+	var tolerations []Toleration
+	for _, t := range tols {
+		tolerations = append(tolerations, Toleration{
+			Key:               t.Key,
+			Operator:          t.Operator,
+			Value:             t.Value,
+			Effect:            t.Effect,
+			TolerationSeconds: t.TolerationSeconds,
+		})
+	}
+	return tolerations
+}
+
+// func (v *Values) MarshalJSON() ([]byte, error) {
+// 	type Alias Values
+// 	return json.Marshal(&struct {
+// 		LastSeen int64 `json:"lastSeen"`
+// 		*Alias
+// 	}{
+// 		LastSeen: u.LastSeen.Unix(),
+// 		Alias:    (*Alias)(u),
+// 	})
+// }
+
+func (val *Values) ToMap() map[string]interface{} {
+
+	var inInterface map[string]interface{}
+	inrec, _ := json.Marshal(val)
+	json.Unmarshal(inrec, &inInterface)
+
+	// iterate through inrecs
+	for field, val := range inInterface {
+		fmt.Println("KV Pair: ", field, val)
+	}
+	return inInterface
+}
+
+func (val *Values) ToMap2() map[string]interface{} {
+	inInterface := structs.Map(val)
+	// iterate through inrecs
+	for field, val := range inInterface {
+		fmt.Println("KV Pair: ", field, val)
+	}
+	return inInterface
+}
+
+func (val *Values) ToValues() chartutil.Values {
+	inrec, _ := json.Marshal(val)
+	vals, _ := chartutil.ReadValues(inrec)
+	return vals
+}
+
+func (val *Values) ToMap3() map[string]interface{} {
+	top := map[string]interface{}{
+		"org": val.Org,
+		"hubconfig": map[string]interface{}{
+			"nodeSelector": val.HubConfig.NodeSelector,
+			"proxyConfigs": val.HubConfig.ProxyConfigs,
+			"replicaCount": val.HubConfig.ReplicaCount,
+			"tolerations": map[string]interface{}{
+				"Key": "1",
+			},
+			"ocpVersion":           val.HubConfig.OCPVersion,
+			"clusterIngressDomain": val.HubConfig.ClusterIngressDomain,
+		},
+	}
+	// "global": map[string]interface{}{
+	// 	"Name":      options.Name,
+	// 	"Namespace": options.Namespace,
+	// 	"IsUpgrade": options.IsUpgrade,
+	// 	"IsInstall": options.IsInstall,
+	// 	"Revision":  options.Revision,
+	// 	"Service":   "Helm",
+	// },
+	// }
+	return top
 }
 
 func RenderCRDs(crdDir string) ([]*unstructured.Unstructured, []error) {
@@ -148,7 +236,9 @@ func renderTemplates(chartPath string, backplaneConfig *v1.MultiClusterEngine, i
 		Strict:   true,
 		LintMode: false,
 	}
-	rawTemplates, err := helmEngine.Render(chart, chartutil.Values{"Values": structs.Map(valuesYaml)})
+	rawTemplates, err := helmEngine.Render(chart, chartutil.Values{"Values": valuesYaml.ToMap()})
+	// rawTemplates, err := helmEngine.Render(chart, valuesYaml.ToValues())
+
 	if err != nil {
 		log.Info(fmt.Sprintf("error rendering chart: %s", chart.Name()))
 		return nil, append(errs, err)
@@ -188,9 +278,9 @@ func injectValuesOverrides(values *Values, backplaneConfig *v1.MultiClusterEngin
 	values.HubConfig.NodeSelector = backplaneConfig.Spec.NodeSelector
 
 	if len(backplaneConfig.Spec.Tolerations) > 0 {
-		values.HubConfig.Tolerations = backplaneConfig.Spec.Tolerations
+		values.HubConfig.Tolerations = convertTolerations(backplaneConfig.Spec.Tolerations)
 	} else {
-		values.HubConfig.Tolerations = utils.DefaultTolerations()
+		values.HubConfig.Tolerations = convertTolerations(utils.DefaultTolerations())
 	}
 
 	values.Org = "open-cluster-management"

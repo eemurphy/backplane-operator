@@ -4,6 +4,7 @@
 package renderer
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -36,6 +37,12 @@ func TestRender(t *testing.T) {
 		{
 			Key:      "dedicated",
 			Operator: "Exists",
+			Effect:   "NoSchedule",
+		},
+		{
+			Key:      "node.ocs.openshift.io/storage",
+			Operator: "Equal",
+			Value:    "true",
 			Effect:   "NoSchedule",
 		},
 	}
@@ -83,6 +90,7 @@ func TestRender(t *testing.T) {
 			deployment := &appsv1.Deployment{}
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(template.Object, deployment)
 			if err != nil {
+				fmt.Println("KV Pair: ", template)
 				t.Fatalf(err.Error())
 			}
 
