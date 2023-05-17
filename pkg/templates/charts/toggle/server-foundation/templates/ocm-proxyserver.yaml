@@ -83,6 +83,8 @@ spec:
             - ALL
           privileged: false
           readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /var/run/klusterlet
           name: klusterlet-certs

@@ -80,6 +80,8 @@ spec:
             - ALL
           privileged: false
           readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - name: webhook-cert
             mountPath: /var/run/ocm-webhook
