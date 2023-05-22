@@ -66,6 +66,8 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
           runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
       hostIPC: false
       hostNetwork: false
       hostPID: false
@@ -79,6 +81,8 @@ spec:
 {{- end }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       serviceAccount: managed-serviceaccount
 {{- with .Values.hubconfig.tolerations }}
       tolerations:

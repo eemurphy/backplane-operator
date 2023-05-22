@@ -46,6 +46,8 @@ spec:
         image: "{{ .Values.global.imageOverrides.clusterlifecycle_state_metrics }}"
         imagePullPolicy: {{ .Values.global.pullPolicy }}
         securityContext:
+          seccompProfile:
+            type: RuntimeDefault
           allowPrivilegeEscalation: false
           capabilities:
             drop:

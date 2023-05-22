@@ -25,6 +25,8 @@ spec:
       hostIPC: false
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -83,6 +85,8 @@ spec:
             drop:
             - ALL
           privileged: false
+          seccompProfile:
+            type: RuntimeDefault
       - name: user-server
         image: '{{ .Values.global.imageOverrides.cluster_proxy_addon }}'
         imagePullPolicy: '{{ .Values.global.pullPolicy }}'
@@ -115,6 +119,8 @@ spec:
             drop:
             - ALL
           privileged: false
+          seccompProfile:
+            type: RuntimeDefault
         livenessProbe:
           httpGet:
             path: /healthz

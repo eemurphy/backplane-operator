@@ -75,6 +75,8 @@ spec:
             memory: 2Gi
         securityContext:
           allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
           capabilities:
             drop:
             - ALL
@@ -96,6 +98,8 @@ spec:
 {{- end }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       serviceAccountName: ocm-foundation-sa
       terminationGracePeriodSeconds: 10
 {{- with .Values.hubconfig.tolerations }}

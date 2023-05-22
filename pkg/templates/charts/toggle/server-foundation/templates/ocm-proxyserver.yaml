@@ -83,6 +83,8 @@ spec:
             - ALL
           privileged: false
           readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /var/run/klusterlet
           name: klusterlet-certs
@@ -117,6 +119,8 @@ spec:
 {{- end }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       serviceAccountName: ocm-foundation-sa
       volumes:
       - name: klusterlet-certs

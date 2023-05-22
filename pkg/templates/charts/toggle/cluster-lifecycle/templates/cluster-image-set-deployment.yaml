@@ -62,6 +62,8 @@ spec:
       hostIPC: false
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - command:
           - "./clusterimageset"
@@ -92,6 +94,8 @@ spec:
         imagePullPolicy: "{{ .Values.global.pullPolicy }}"
         name: cluster-image-set-controller
         securityContext:
+          seccompProfile:
+            type: RuntimeDefault
           allowPrivilegeEscalation: false
           capabilities:
             drop:

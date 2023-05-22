@@ -101,6 +101,8 @@ spec:
             - ALL
           privileged: false
           readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
       hostIPC: false
       hostNetwork: false
       hostPID: false
@@ -114,6 +116,8 @@ spec:
 {{- end }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       serviceAccountName: assisted-service
       terminationGracePeriodSeconds: 10
 {{- with .Values.hubconfig.tolerations }}

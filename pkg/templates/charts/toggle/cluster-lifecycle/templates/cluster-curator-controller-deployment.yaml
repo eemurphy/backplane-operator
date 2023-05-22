@@ -57,6 +57,8 @@ spec:
       hostPID: false
       hostIPC: false
       securityContext:
+        seccompProfile:
+            type: RuntimeDefault
         runAsNonRoot: true
       containers:
       - command:
@@ -81,6 +83,8 @@ spec:
         imagePullPolicy: "{{ .Values.global.pullPolicy }}"
         name: cluster-curator-controller
         securityContext:
+          seccompProfile:
+            type: RuntimeDefault
           allowPrivilegeEscalation: false
           capabilities:
             drop:

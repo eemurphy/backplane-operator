@@ -35,6 +35,8 @@ spec:
       hostIPC: false
       terminationGracePeriodSeconds: 60
       securityContext:
+        seccompProfile:
+            type: RuntimeDefault
         runAsNonRoot: true
       affinity:
         nodeAffinity:
@@ -85,6 +87,8 @@ spec:
         {{- end }}
         imagePullPolicy: {{ .Values.global.pullPolicy }}
         securityContext:
+          seccompProfile:
+            type: RuntimeDefault
           allowPrivilegeEscalation: false
           capabilities:
             drop:

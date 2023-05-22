@@ -81,6 +81,8 @@ spec:
             - ALL
           privileged: false
           readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /etc/pki/ca-trust/extracted/pem/
           name: trusted-ca-bundle
@@ -97,6 +99,8 @@ spec:
 {{- end }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       serviceAccountName: discovery-operator
       terminationGracePeriodSeconds: 10
 {{- with .Values.hubconfig.tolerations }}
